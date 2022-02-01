@@ -1,0 +1,29 @@
+{
+  "name": "probemaster",
+  "version": "0.0.2",
+  "description": "Collecteur de sondes pour la domotique",
+  "main": "ProbeMaster.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "./node_modules/.bin/pm2 --watch start ProbeMaster.js && ./node_modules/.bin/pm2 save",
+    "nginx": "mechanic add probemaster --host=rpimaster.wan --backends=3001 --aliases=rpimaster,192.168.1.100 --default=true",
+    "list": "./node_modules/.bin/pm2 list",
+    "postinstall": "$( ./node_modules/.bin/pm2 startup systemd | grep sudo )"
+  },
+  "keywords": [
+    "probe"
+  ],
+  "author": "Alban",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.25.0",
+    "express": "^4.17.2",
+    "network": "^0.6.1",
+    "node-dev": "^7.1.0",
+    "node-telnet-client": "^1.0.0-8",
+    "pigpio": "^3.3.1",
+    "ping": "^0.4.1",
+    "pm2": "^5.1.2",
+    "rpio": "^2.4.2"
+  }
+}
