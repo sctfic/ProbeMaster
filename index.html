@@ -1,0 +1,6 @@
+app.get('/network/', function (request, response) {
+    network.get_interfaces_list(function(err, list) {
+      console.log(err || list);
+      response.send('<pre>'+JSON.stringify(list)+'</pre>');
+    })
+  })
