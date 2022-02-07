@@ -15,13 +15,11 @@ router
 			response.send('IP Publique = '+ip);
 		})
 	})
-
 	.get('/interfaces/', function (request, response) {
 		network.get_interfaces_list(function(err, list) {
 			response.json (list);
 		});
 	})
-
     .get("/interfaces/:name",(request,response)=>{
         // interfacesJS.getInterface(request.params.name)
 		axios.get('http://localhost:3001/interfaces/')
@@ -44,36 +42,32 @@ router
 			});
 
 	})
-
-	.get('/ping/:host', async function (request, response) {
-
-		let res = await ping.promise.probe(request.params.host);
-		console.log(res);
-		response.json(res)
-	})
-	.get('/pings/', function (request, response) {
-
-		const hosts = ['imp', 'yahoo.com','192.168.1.1','google.com'];
+	.get('/ping/:hosts', function (request, response) {
+		const hosts = request.params.hosts.split(',');
+		const reply = []
+		const Prom = []
 		hosts.forEach(function (host) {
-				// WARNING: -i 2 argument may not work in other platform like window
-			ping.promise.probe(host, {
-				timeout: false,
-				// Below extra arguments may not work in platforms other than linux
-				extra: ['-i', '2'],
-			})
-			.then(function (resp) {
-				console.log('display',resp);
-				return resp
-			})
-			.done(
-				// function (resp) {
-				// 	console.log(resp);
-				// }
+			Prom.push( // ajout de l'oject Promise dans un table qui sera teste plus tard
+				 ping.promise.probe(host, {
+					timeout: false,
+					extra: ['-c', '4']
+				})
+				.then(function (resp) {
+					console.log(resp.inputHost)
+					delete resp.output;
+					delete resp.inputHost;
+					reply.push(resp)
+				}.bind(this))
+			  )
+		})
+		Promise
+			.all(Prom)
+			.then(function () {
+					console.log("=== END ===", Prom) 
+					response.json(reply)
+				}
 			)
-		});
 	})
-
-	
 	.use((request, response) => {
 		response.status(404);
 		response.json({
