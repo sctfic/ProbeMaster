@@ -55,12 +55,12 @@ router
 					console.log('Ping -c2 ' +result.inputHost)
 					delete result.output;
 					delete result.inputHost;
-					return result
-				}.bind(this))
+					return result // sera recupere par Promise.All()
+				}.bind(this)) // bind() retoune l'objet promise
 			  )
 		})
 		Promise.all(PromiseOfPings)
-			.then(function (resultat) {
+			.then(function (resultat) { // recupere tous les resultats
 					// console.log("=== END ===", PromiseOfPings, resultat) 
 					response.json(resultat)
 				}
