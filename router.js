@@ -44,27 +44,25 @@ router
 	})
 	.get('/ping/:hosts', function (request, response) {
 		const hosts = request.params.hosts.split(',');
-		const reply = []
-		const Prom = []
+		const PromiseOfPings = []
 		hosts.forEach(function (host) {
-			Prom.push( // ajout de l'oject Promise dans un table qui sera teste plus tard
+			PromiseOfPings.push( // ajout de l'oject Promise dans un table qui sera teste plus tard
 				 ping.promise.probe(host, {
 					timeout: false,
-					extra: ['-c', '4']
+					extra: ['-c', '2']
 				})
-				.then(function (resp) {
-					console.log(resp.inputHost)
-					delete resp.output;
-					delete resp.inputHost;
-					reply.push(resp)
+				.then(function (result) {
+					console.log('Ping -c2 ' +result.inputHost)
+					delete result.output;
+					delete result.inputHost;
+					return result
 				}.bind(this))
 			  )
 		})
-		Promise
-			.all(Prom)
-			.then(function () {
-					console.log("=== END ===", Prom) 
-					response.json(reply)
+		Promise.all(PromiseOfPings)
+			.then(function (resultat) {
+					// console.log("=== END ===", PromiseOfPings, resultat) 
+					response.json(resultat)
 				}
 			)
 	})
