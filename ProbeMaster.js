@@ -5,7 +5,7 @@ const router = require('./router');
 const cors = require('cors');
 
 // MORGAN permet de définir les informations que le serveur affiche dans la console à chaque fois qu’il reçoit une requête HTTP
-const morgan = require('morgan');
+// const morgan = require('morgan');
 
 // permet de décomposer les requêtes HTTP POST, PATCH, etc. afin de pouvoir extraire les infoirmations tranmises dans des formulaires. Ces informations apparaissent dans le champ req.body
 const bodyParser = require("body-parser");
@@ -14,7 +14,7 @@ const app = express();
 
 const port = process.env.PORT || 3001;
 
-app.use(morgan('combined')); 
+// app.use(morgan('combined')); 
 app.use(cors());
 app.use(bodyParser.json()); 
 app.use(bodyParser.urlencoded({

@@ -16,17 +16,20 @@
   "author": "Alban",
   "license": "ISC",
   "dependencies": {
+    "array-gpio": "^1.6.1",
     "axios": "^0.25.0",
     "body-parser": "^1.19.1",
+    "colors": "^1.4.0",
     "cors": "^2.8.5",
     "express": "^4.17.2",
     "morgan": "^1.10.0",
     "network": "^0.6.1",
     "node-dev": "^7.1.0",
     "node-telnet-client": "^1.0.0-8",
-    "pigpio": "^3.3.1",
     "ping": "^0.4.1",
     "pm2": "^5.1.2",
-    "rpio": "^2.4.2"
+    "rpio": "^2.4.2",
+    "ssh2": "^1.6.0",
+    "ssh2-promise": "^1.0.2"
   }
 }
