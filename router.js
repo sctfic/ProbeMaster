@@ -30,6 +30,9 @@ router
 	.get("/", (request, response) => {
 		response.sendFile(path.resolve(__dirname, 'UI/', 'index.html'));
 	})
+	.get("/2/", (request, response) => {
+		response.sendFile(path.resolve(__dirname, 'UI/', 'index2.html'));
+	})
 	.get("/ip", (request, response) => {
 		const data = {};
 		const ippublic = network.get_public_ip(function(err, ip) {
@@ -76,7 +79,7 @@ router
 		let r = []
 		for(let x in relays){
 			relays[x]._index.query = null
-			relays[x]._index.state = relays[x].state ? 'On':'Off' 
+			relays[x]._index.state = relays[x].state ? 'on':'off' 
 			relays[x]._index.succes = true
 			r.push(relays[x]._index)
 		}
@@ -97,7 +100,7 @@ router
 			for(let x in relays2change){
 				relays2change[x].on(t);
 				relays2change[x]._index.query = 'on'
-				relays2change[x]._index.state = relays2change[x].state ? 'On':'Off' 
+				relays2change[x]._index.state = relays2change[x].state ? 'on':'off' 
 				relays2change[x]._index.succes = true
 				r.push(relays2change[x]._index)
 			}
@@ -108,7 +111,7 @@ router
 			for(let x in relays2change){
 				relays2change[x].off(t);
 				relays2change[x]._index.query = 'off'
-				relays2change[x]._index.state = relays2change[x].state ? 'On':'Off' 
+				relays2change[x]._index.state = relays2change[x].state ? 'on':'off' 
 				relays2change[x]._index.succes = true
 				r.push(relays2change[x]._index)
 			}
@@ -119,7 +122,7 @@ router
 			for(let x in relays2change){
 				relays2change[x].pulse(t)
 				relays2change[x]._index.query = 'pulse'
-				relays2change[x]._index.state = relays2change[x].state ? 'On':'Off' 
+				relays2change[x]._index.state = relays2change[x].state ? 'on':'off' 
 				relays2change[x]._index.succes = true
 				r.push(relays2change[x]._index)
 			}
