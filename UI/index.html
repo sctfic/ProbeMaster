@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Serveur RPiMaster</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="/w3.css">
+    <style>
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 36px;
+          height: 60px;
+        }
+        
+        .switch input { 
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border: 1px solid gray;
+          background-color: #ccc;
+          -webkit-transition: .4s;
+          transition: .4s;
+          padding-top: 5px;
+        }
+        
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 26px;
+          width: 26px;
+          left: 4px;
+          bottom: 4px;
+          border: 1px solid gray;
+          background-color: white;
+          -webkit-transition: .4s;
+          transition: .4s;
+          opacity: 0.75;
+        }
+        
+        input:checked + .slider {
+          background-color: #2196F3;
+        }
+        
+        input:checked + .slider:before {
+          -webkit-transform: translateY(-25px);
+          -ms-transform: translateY(-25px);
+          transform: translateY(-25px);
+        }
+        .slider.round {
+          border-radius: 34px;
+          box-shadow:0 6px 3px 0 rgba(0,0,0,0.2),0 10px 6px 0 rgba(0,0,0,0.19)
+        }
+        
+        .slider.round:before {
+          border-radius: 50%;
+          box-shadow:0 3px 6px 0 rgba(0,0,0,0.2),0 6px 10px 0 rgba(0,0,0,0.19)
+        }
+        .padding-bottom {
+          padding: top 0px!important;padding-bottom:16px!important
+        }
+        .spacer {
+          margin: 10px;
+        }
+    */
+    </style>
+    <script type="text/javascript" src="/jquery.js"></script>
+    <script type="text/javascript" src="/script.js"></script>
+    <script>
+      var TimeInterval = null
+        $( document ).ready(function() {
+            $.get( "API/relay", function( data ) {
+                data.forEach(function(relay){
+                  setButton(relay.Relay,relay.state);
+                });
+                console.log(data);
+            });
+            
+        });
+    </script>
+</head>
+<body class="w3-animate-opacity">
+    <div class="w3-card w3-blue w3-padding-small w3-center">
+        <h1>RPiMaster</h1>
+    </div>
+    <div class="w3-margin w3-center w3-card padding-bottom">
+      <h3 class="w3-padding">Pilotage relais</h3>
+      <label class="switch">
+          <input id="relay1" onchange="toggleButton(1)" type="checkbox">
+          <span class="slider round">1</span>
+      </label>
+      <label class="switch">
+          <input id="relay2" onchange="toggleButton(2)" type="checkbox">
+          <span class="slider round">2</span>
+      </label>
+      <label class="switch">
+          <input id="relay3" onchange="toggleButton(3)" type="checkbox">
+          <span class="slider round">3</span>
+      </label>
+      <label class="switch">
+          <input id="relay4" onchange="toggleButton(4)" type="checkbox">
+          <span class="slider round">4</span>
+      </label>
+      <span class="spacer"></span>
+      <label class="switch">
+          <input id="relayAll" onchange="toggleAll([1,2,3,4])" type="checkbox">
+          <span class="slider round">all</span>
+      </label>
+  </div>
+  <div class="w3-margin w3-center w3-card padding-bottom">
+    <h3 class="w3-padding">Simulateur d'activite</h3>
+    <label class="switch">
+        <input id="relayCron" onchange="toggleCron()" type="checkbox">
+        <span class="slider round">~</span>
+    </label>
+  </div>
+    <pre>
+        <code id="status"></code>
+    </pre>
+
+</body>
+</html>
