@@ -8,6 +8,7 @@ app.use(express.json());
 require('./routesAPI/ping')(app)
 require('./routesAPI/GPIO')(app)
 require('./routesAPI/interfaces')(app)
+require('./routesAPI/influxDB')(app)
 require('./routesUI/index')(app)
 
 app
@@ -18,12 +19,6 @@ app
 	// 	ssh2JS.getTunnel()
 	// })
 
-	.post("/probe", (request, response) => {
-		response.status(201);
-		console.log('.post(/probe)',request.body);
-		// request.body.Network.hostname
-		response.json({ Status: 'Success', url: request.url, HostName: request.body.Network.hostname });
-	})
 	.use(function(request, response, next) {
 		response.status(404);
 		console.log('.use(404)',request.rawHeaders,request.url)
