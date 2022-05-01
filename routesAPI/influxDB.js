@@ -83,12 +83,31 @@ app
 					area:'serramoune',
 				}
 			},
-			other:{
-				voltage:raw.Energy.Battery.Voltage.Raw,
-				capacity:raw.Energy.Battery.Capacity.Raw,
+			voltageBat:{
+				value:raw.Energy.Battery.Voltage.Raw,
 				tags: {
 					probe:raw.Settings.Lan.Hostname,
-					type:'battery',
+					type:'Battery',
+					room:'livingroom',
+					area:'serramoune',
+				}
+			},
+			voltagePow:{
+				value:raw.Energy.PowerSupply.Voltage.Raw,
+				tags: {
+					probe:raw.Settings.Lan.Hostname,
+					location:'indoor',
+					type:'PowerSupply',
+					room:'livingroom',
+					area:'serramoune',
+				}
+			},
+			capacityBat:{
+				value:raw.Energy.Battery.Capacity.Raw,
+				tags: {
+					probe:raw.Settings.Lan.Hostname,
+					location:'indoor',
+					type:'Battery',
 					room:'livingroom',
 					area:'serramoune',
 				}

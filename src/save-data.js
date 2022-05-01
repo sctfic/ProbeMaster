@@ -41,6 +41,21 @@ async function saveData(data) {
             fields: {CO2: data.CO2.value,},
             tags: data.CO2.tags
         },
+        {
+            measurement: 'voltage',
+            fields: {voltage: data.voltageBat.value,},
+            tags: data.voltageBat.tags
+        },
+        {
+            measurement: 'voltage',
+            fields: {voltage: data.voltagePow.value,},
+            tags: data.voltagePow.tags
+        },
+        {
+            measurement: 'Capacity',
+            fields: {Capacity: data.capacityBat.value,},
+            tags: data.capacityBat.tags
+        },
         // {
         //     measurement: 'wind',
         //     fields: wind,
@@ -56,14 +71,6 @@ async function saveData(data) {
         //     fields: sun,
         //     tags: [data.sun.tags]
         // },
-        {
-            measurement: 'other',
-            fields: {
-                voltage: data.other.voltage,
-                capacity: data.other.capacity,
-            },
-            tags: data.other.tags
-        },
     ]);
 }
 
