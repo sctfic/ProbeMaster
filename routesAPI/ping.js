@@ -11,7 +11,6 @@ async function getAllPromises(Promises){
 }
 function splitIP(IPStrList) {
     return IPStrList.split(',');
-
 }
 function callPing(IPList, args) {
     const PromiseOfPings = []

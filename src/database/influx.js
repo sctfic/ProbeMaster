@@ -9,12 +9,12 @@ const {
 
 function getInfluxDBConnection() {
 
-    console.log(
-        "\nINFLUXDB_HOST=",INFLUXDB_HOST,
-        "\nINFLUXDB_PORT=",INFLUXDB_PORT,
-        "\nINFLUXDB_USERNAME=",INFLUXDB_USERNAME,
-        "\nINFLUXDB_DATABASE=",INFLUXDB_DATABASE,
-    )
+    // console.log(
+    //     "\nINFLUXDB_HOST=",INFLUXDB_HOST,
+    //     "\nINFLUXDB_PORT=",INFLUXDB_PORT,
+    //     "\nINFLUXDB_USERNAME=",INFLUXDB_USERNAME,
+    //     "\nINFLUXDB_DATABASE=",INFLUXDB_DATABASE,
+    // )
     return new InfluxDB({
         host: INFLUXDB_HOST,
         port: INFLUXDB_PORT,
@@ -52,20 +52,6 @@ function getInfluxDBConnection() {
                 measurement: 'pressure',
                 fields: {
                     pressure: FieldType.INTEGER,
-                },
-                tags: [
-                    'probe',
-                    'location',
-                    'area',
-                    'room',
-                    'type'
-                ]
-            },
-            {
-                measurement: 'other',
-                fields: {
-                    voltage: FieldType.FLOAT,
-                    capacity: FieldType.FLOAT,
                 },
                 tags: [
                     'probe',

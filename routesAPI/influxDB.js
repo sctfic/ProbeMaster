@@ -1,6 +1,11 @@
-const Influx = require('influx');
+// const Influx = require('influx');
 const { getConnection } = require('../src/database/influx');
 const { saveData } = require('../src/save-data');
+const { readData } = require('../src/read-data');
+// const { getInfluxDBConnection } = require('../src/database/influx');
+
+const { query } = require('express');
+// const influx = getInfluxDBConnection();
 
 // Connect to a single host with a full set of config details and
 // a custom schema
@@ -21,17 +26,26 @@ const { saveData } = require('../src/save-data');
 // influx -execute 'SHOW TAG KEYS ON "home"'
 
 
-module.exports = function(app){
-app
-    .post("/probe", (request, response) => {
-		response.status(201);
-		console.log('.post(/probe)',request.body);
-		// request.body.Network.hostname
-		response.json({ Status: 'Success', url: request.url, HostName: request.body.Network.hostname });
-    })
-    .post('/API/db/test', async function (request, response) {
-		var raw = request.body;
 
+
+module.exports = function(app){
+
+
+
+app
+    // .post("/probe", (request, response) => {
+	// 	console.log('.post(/probe)',request.body);
+	// 	// request.body.Network.hostname
+	// 	response.json({ Status: 'Success', url: request.url, HostName: request.body.Network.hostname });
+	// 	response.status(201);
+    // })
+    .post('/API/db/read', async function (request, response) {
+		var query = request.body; // le contenu du post
+		console.log('NODEJS Route => .GET(/API/db/read)',query);
+		readData(query, request, response)
+	})
+	.post('/API/db/save', async function (request, response) {
+		var raw = request.body;
 		var data = {
 			light:{
 				value:raw.Probe.LUX.Raw,
@@ -126,8 +140,7 @@ app
 			// },
 
 		};
-		console.log('.post(/API/db/test)',data);
-
+		console.log('.POST (/API/db/save)');
 		saveData(data);
     })
 }
