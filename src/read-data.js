@@ -74,7 +74,7 @@ async function readData(query, request, response) {
     
     queryStr += `
         group by time(${interval}s)
-        order by time desc
+        order by time
         limit ${query.NbPoints*1}`
     
     console.log(queryStr);

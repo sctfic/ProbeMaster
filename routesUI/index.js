@@ -7,4 +7,10 @@ app
 	.get("/dev", (request, response) => {
 		response.sendFile(path.resolve(__dirname, '../UI/', 'index2.html'));
 	})
+	.get("/graph", (request, response) => {
+		response.sendFile(path.resolve(__dirname, '../UI/', 'charts.html'));
+	})
+	.get("/graph/:mode", (request, response) => {
+		response.sendFile(path.resolve(__dirname, '../UI/', 'charts.html'));
+	})
 }

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>Serveur RPiMaster</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <script type="text/javascript" src="/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="/normalize.css">
+    <link rel="stylesheet" href="/skeleton.css">
+    <style>
+        .line {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 1.5px;
+        }
+        .zoom {
+            cursor: move;
+            fill: none;
+            pointer-events: all;
+        }
+
+        .shadow{
+            box-shadow: 10px -10px 5px #00f;
+            text-shadow: -2px 0 2px #fff, 0 2px 2px #fff, 2px 0 2px #fff, 0 -2px 2px #fff,
+                         -2px 2px 2px #fff, 2px 2px 2px #fff, 2px -2px 2px #fff, -2px -2px 2px #fff;
+        }
+        
+        </style>
+</head>
+<body>
+    <svg id="SvgChart" width="960" height="500"></svg>
+    <pre>
+        <code id="status"></code>
+    </pre>
+</body>
+<script>
+    d3.json('/API/db/read', {
+        method:"POST",
+        body: JSON.stringify({
+            serie: "CO2",
+            tags: [
+                // {
+                //     operator:"and",
+                //     name: "type",
+                //     value: "Battery"
+                // }
+            ],
+            times: {
+                start: "2022-04-29T00:00:00.0Z",
+                end: "2022-05-15T00:00:00.0Z"
+            },
+            precision: 1,
+            NbPoints:2500
+        }),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    })
+    .then(json => {
+        // console.log(json);
+        return json.map(data => {
+            const date = d3.isoParse(data.time);
+            const value = data.mean*1;
+            // console.log({date, value});
+            return {date, value};
+        });
+    })
+    .then(
+        data => {
+            var margin = {top: 20, right: 20, bottom: 50, left: 70},
+                width = 960 - margin.left - margin.right,
+                height = 500 - margin.top - margin.bottom;
+            // console.log(margin,width,height);
+
+
+            var x = d3.scaleUtc()
+                .domain(d3.extent(data, d => d.date))
+                .range([0, width]);
+            // console.log('x=',x);
+            var y = d3.scaleLinear()
+                .domain(d3.extent(data, d => d.value)) // [d3.min(data, d => d.value), d3.max(data, d => d.value)]
+                .range([height, 0]);
+            // console.log('y=',y);
+            var formatDate = d3.timeFormat("%Y-%m-%d %H:%M:%S"),
+                bisectDate = d3.bisector(function(d) {return d.date; }).left;
+
+            valueline = d3.line()
+                .x(d => x(d.date))
+                .y(d => y(d.value))
+                .curve(d3.curveMonotoneX) // curveBundle, curveCatmullRom.alpha(1), curveCardinal, curveMonotoneX
+            // console.log('valueline=',valueline);
+
+            var svg = d3.select('#SvgChart')
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+              // Add the x Axis
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x))
+                .transition().duration(1000).call(d3.axisBottom(x));
+            // Add the y Axis
+            svg.append("g")
+                .call(d3.axisLeft(y));
+            // Adding a separate group to 'layer' the objects
+
+            // Set the gradient
+            svg.append("linearGradient")
+                .attr("id", "line-gradient")
+                .attr("gradientUnits", "userSpaceOnUse")
+                .attr("x1", 0)
+                .attr("y1", y(d3.min(data, d => d.value)))
+                .attr("x2", 0)
+                .attr("y2", y(d3.max(data, d => d.value)))
+                .selectAll("stop")
+                .data([
+                    {offset: "0%", color: "blue"},
+                    {offset: "100%", color: "red"}
+                ])
+                .enter().append("stop")
+                .attr("offset", function(d) { return d.offset; })
+                .attr("stop-color", function(d) { return d.color; });
+
+            var line = svg.append("path")
+                .datum(data)
+                .attr("z-index", -1)
+                .attr("fill", "none")
+                .attr("stroke", "url(#line-gradient)" )
+                .attr("stroke-width", 1)
+                .attr("d", valueline)
+                .transition()
+                .duration(1000)
+
+            // var lineSvg = svg.append("g");
+            // Add the valueline path.
+            // lineSvg.append("path")
+            //     .data([data])
+            //     .attr("class", "line")
+            //     .attr("d", valueline);
+
+            // Add the X Axis
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x));
+
+            // Add the Y Axis
+            svg.append("g")
+                .call(d3.axisLeft(y));
+
+            var focus = svg.append("g") 
+                .style("display", "none");
+            // append the x line
+            focus.append("line")
+                .attr("class", "x")
+                .style("stroke", "red")
+                .style("stroke-dasharray", "3,3") // pointillees
+                .style("opacity", 0.5)
+                .attr("y1", 0)
+                .attr("y2", height);
+
+            // append the y line
+            focus.append("line")
+                .attr("class", "y")
+                .style("stroke", "blue")
+                .style("stroke-dasharray", "3,3") // pointillees
+                .style("opacity", 0.5)
+                .attr("x1", width)
+                .attr("x2", width);
+
+            // append the circle at the intersection 
+            focus.append("circle")
+                .attr("class", "y")
+                .style("fill", "none")
+                .style("stroke-width", "5px")
+                .style("stroke", "white")
+                .attr("r", 6);
+            focus.append("circle")
+                .attr("class", "y")
+                .style("fill", "none")
+                .style("stroke", "blue")
+                .attr("r", 6);
+
+            // place the value at the intersection
+            focus.append("text")
+                .attr("class", "y1 shadow")
+                .attr("dx", 8)
+                .attr("dy", "-.3em");
+
+            // place the date at the intersection
+            focus.append("text")
+                .attr("class", "y3 shadow")
+                .attr("dx", 8)
+                .attr("dy", "1em");
+  
+            // append the rectangle to capture mouse
+            var Sensitive = svg.append("rect")
+                .attr("width", width)
+                .attr("height", height)
+                .style("fill", "none")
+                .style("pointer-events", "all")
+                .on("mouseover", function() { focus.style("display", null); })
+                .on("mouseout", function() { focus.style("display", "none"); })
+                .on("mousemove", mousemove);
+
+
+            function mousemove() {
+                var x0 = x.invert(d3.pointer(event,this)[0]),
+                    i = bisectDate(data, x0, 1);
+                var d0 = data[i - 1],
+                    d1 = data[i],
+                    d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+
+                focus.selectAll("circle.y")
+                .attr("transform","translate(" + x(d.date) + "," +y(d.value) + ")");
+
+                focus.select("text.y1")
+                    .attr("transform","translate(" + x(d.date) + "," + y(d.value) + ")")
+                    .text(d.value);
+
+                // focus.select("text.y2")
+                //     .attr("transform",
+                //             "translate(" + x(d.date) + "," +
+                //                             y(d.value) + ")")
+                //     .text(d.value);
+
+                focus.select("text.y3")
+                    .attr("transform","translate(" + x(d.date) + "," +y(d.value) + ")")
+                    .text(formatDate(d.date));
+
+                // focus.select("text.y4")
+                //     .attr("transform",
+                //             "translate(" + x(d.date) + "," +
+                //                             y(d.value) + ")")
+                //     .text(formatDate(d.date));
+
+                focus.select(".x")
+                    .attr("transform","translate(" + x(d.date) + "," +y(d.value) + ")")
+                    .attr("y2", height - y(d.value)-3);
+
+                focus.select(".y")
+                    .attr("transform","translate(" + width * -1 + "," +y(d.value) + ")")
+                    .attr("x1", width)
+                    .attr("x2", width + x(d.date)-3);
+            }
+        }
+    )
+
+
+//     const loadData = () => {
+//   fetch('/API/db/read')
+//     .then( response => {
+//       if (response.status !== 200) {
+//         console.log(response);
+//       }
+//       return response;
+//     })
+//     .then(response => response.json())
+//     .then(parsedResponse => {
+//       const unpackData = (array, key) => {
+//         console.log(array, key);
+//         return array.map(obj => Object.assign({}, { x: Date.parse(obj['time']), y: obj[key] }))
+//       };
+
+//       const palette = new Rickshaw.Color.Palette({ scheme: 'colorwheel' });
+//       const graph = new Rickshaw.Graph({
+//         element: document.querySelector('#chart'),
+//         width: 1200,
+//         height: 640,
+//         renderer: 'line',
+//         series: [
+//           {
+//             name: 'Mean User Usage',
+//             data: unpackData(parsedResponse, 'mean_usage_user'),
+//             color: palette.color()
+//           },
+//           {
+//             name: 'Mean System Usage',
+//             data: unpackData(parsedResponse, 'mean_usage_system'),
+//             color: palette.color()
+//           },
+//         ]
+//       });
+
+//       const xAxis = new Rickshaw.Graph.Axis.Time({
+//         graph: graph,
+//         ticksTreatment: 'glow'
+//       });
+
+//       const yAxis = new Rickshaw.Graph.Axis.Y({
+//         element: document.getElementById('y-axis'),
+//         graph: graph,
+//         orientation: 'left',
+//         tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+//       });
+//       const legend = new Rickshaw.Graph.Legend( {
+//         element: document.getElementById('legend'),
+//         graph: graph
+//       });
+//       const offsetForm = document.getElementById('offset-form');
+//       offsetForm.addEventListener('change', function(e) {
+//         const offsetMode = e.target.value;
+
+//         if (offsetMode == 'lines') {
+//                 graph.setRenderer('line');
+//                 graph.offset = 'zero';
+//         } else {
+//                 graph.setRenderer('stack');
+//                 graph.offset = offsetMode;
+//         }
+//         graph.render();
+//       }, false);
+
+//       return graph.render();
+//     })
+//     .catch( error => console.log(error) );
+// }
+
+// document.addEventListener('DOMContentLoaded', loadData);
+</script>
+
+
+    <script>
+//     var svg = d3.select("svg"),
+//         margin = {top: 20, right: 20, bottom: 110, left: 40},
+//         margin2 = {top: 430, right: 20, bottom: 30, left: 40},
+//         width = +svg.attr("width") - margin.left - margin.right,
+//         height = +svg.attr("height") - margin.top - margin.bottom,
+//         height2 = +svg.attr("height") - margin2.top - margin2.bottom;
+
+//     // var parseDate = d3.timeParse("%m/%d/%Y %H:%M");
+
+//     var x = d3.scaleTime().range([0, width]),
+//         x2 = d3.scaleTime().range([0, width]),
+//         y = d3.scaleLinear().range([height, 0]),
+//         y2 = d3.scaleLinear().range([height2, 0]);
+
+//     var xAxis = d3.axisBottom(x),
+//         xAxis2 = d3.axisBottom(x2),
+//         yAxis = d3.axisLeft(y);
+
+//     var brush = d3.brushX()
+//         .extent([[0, 0], [width, height2]])
+//         .on("brush end", brushed);
+
+//     var zoom = d3.zoom()
+//         .scaleExtent([1, Infinity])
+//         .translateExtent([[0, 0], [width, height]])
+//         .extent([[0, 0], [width, height]])
+//         .on("zoom", zoomed);
+
+//     var line = d3.line()
+//         .x(function (d) { return x(d.Date); })
+//         .y(function (d) { return y(d.Air_Temp); });
+
+//     var line2 = d3.line()
+//         .x(function (d) { return x2(d.Date); })
+//         .y(function (d) { return y2(d.Air_Temp); });
+
+//     var clip = svg.append("defs").append("svg:clipPath")
+//         .attr("id", "clip")
+//         .append("svg:rect")
+//         .attr("width", width)
+//         .attr("height", height)
+//         .attr("x", 0)
+//         .attr("y", 0); 
+
+
+//     var Line_chart = svg.append("g")
+//         .attr("class", "focus")
+//         .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+//         .attr("clip-path", "url(#clip)");
+
+
+//     var focus = svg.append("g")
+//         .attr("class", "focus")
+//         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+// var context = svg.append("g")
+//     .attr("class", "context")
+//     .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+// // d3.csv("CIMIS_Station_125.csv", type,
+
+
+
+
+
+// d3.json('/API/db/read', {
+//       method:"POST",
+//       body: JSON.stringify({
+//         serie: "voltage",
+//         tags: [
+//             {
+//                 operator:"and",
+//                 name: "type",
+//                 value: "Battery"
+//             }
+//         ],
+//         times: {
+//             start: "2022-04-29T22:00:00.0Z",
+//             end: "2022-05-12T22:00:00.0Z"
+//         },
+//         precision: 0.01,
+//         NbPoints:1000
+//     }),
+//       headers: {
+//         "Content-type": "application/json; charset=UTF-8"
+//       }
+//     })
+//     .then(json => {
+//         // console.log(json);
+//         json.map(data => {
+//             const time = d3.isoParse(data.time);
+//             const value = data.mean*2;
+//             // console.log({time, value});
+//             return {time, value};
+//         });
+//     })
+//     .then(
+//         function (error, data) {
+//         if (error) throw error;
+
+//         x.domain(d3.extent(data, function(d) { return d.Date; }));
+//         y.domain([0, d3.max(data, function (d) { return d.Air_Temp; })]);
+//         x2.domain(x.domain());
+//         y2.domain(y.domain());
+
+
+//             focus.append("g")
+//                 .attr("class", "axis axis--x")
+//                 .attr("transform", "translate(0," + height + ")")
+//                 .call(xAxis);
+
+//             focus.append("g")
+//                 .attr("class", "axis axis--y")
+//                 .call(yAxis);
+
+//             Line_chart.append("path")
+//                 .datum(data)
+//                 .attr("class", "line")
+//                 .attr("d", line);
+
+//             context.append("path")
+//                 .datum(data)
+//                 .attr("class", "line")
+//                 .attr("d", line2);
+
+
+//         context.append("g")
+//             .attr("class", "axis axis--x")
+//             .attr("transform", "translate(0," + height2 + ")")
+//             .call(xAxis2);
+
+//         context.append("g")
+//             .attr("class", "brush")
+//             .call(brush)
+//             .call(brush.move, x.range());
+
+//         svg.append("rect")
+//             .attr("class", "zoom")
+//             .attr("width", width)
+//             .attr("height", height)
+//             .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+//             .call(zoom);
+//         console.log(data);
+//         });
+
+// function brushed() {
+//   if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+//   var s = d3.event.selection || x2.range();
+//   x.domain(s.map(x2.invert, x2));
+//   Line_chart.select(".line").attr("d", line);
+//   focus.select(".axis--x").call(xAxis);
+//   svg.select(".zoom").call(zoom.transform, d3.zoomIdentity
+//       .scale(width / (s[1] - s[0]))
+//       .translate(-s[0], 0));
+// }
+
+// function zoomed() {
+//   if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
+//   var t = d3.event.transform;
+//   x.domain(t.rescaleX(x2).domain());
+//   Line_chart.select(".line").attr("d", line);
+//   focus.select(".axis--x").call(xAxis);
+//   context.select(".brush").call(brush.move, x.range().map(t.invertX, t));
+// }
+
+// function type(d) {
+//   d.Date = parseDate(d.Date);
+//   d.Air_Temp = +d.Air_Temp;
+//   return d;
+// }
+    </script>
+</html>

@@ -4,6 +4,7 @@ module.exports = function(app){
 	app
 	.get("/API/ip", (request, response) => {
 		network.get_public_ip(function(err, ip) {
+			console.log({'IPPublique' : ip,url:'http://'+ip+'/'});
 			response.json({'IPPublique' : ip,url:'http://'+ip+'/'});
 		})
 	})
