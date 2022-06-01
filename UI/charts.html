@@ -42,27 +42,47 @@
         width = areaWidth - margin.left - margin.right, // zone de tracage
         height = areaHeight - margin.top - margin.bottom; // zone de tracage
 
-        
     var url = window.location.pathname.split('/');
     // var serie =  [{name:'CO2', Unit:'xx', precision:1, NbPoints:width, type:'type'}]
-    []
+</script>
+
+<script>
+    const NbPts = Math.round(width/2);
     var serie = (url[url.length-1].split(',')).map(
         item => {
             [name,type] = item.split('.')
             // console.log('[name,type]', [name,type])
             if (type) {
-                return {name:name, Unit:'V', precision:0.01, NbPoints:Math.round(width/2), tags:[type]};
+                return {name:name, Unit:'V', precision:0.001, NbPoints:NbPts, tags:[type]};
             }
-            return {name:name, Unit:'$', precision:1, NbPoints:Math.round(width/2)};
+            return {name:name, Unit:'$', precision:0.001, NbPoints:NbPts};
         }
     )
     // console.log('serie', serie)
+    
 
+    // var serie =  [{name:'CO2', Unit:'xx', precision:1, NbPoints:width, type:'type'}]
+    var serie = [
+            {name:'voltage', Unit:'V', precision:0.001, NbPoints:NbPts, tags:['PowerSupply']},
+            {name:'voltage', Unit:'V', precision:0.001, NbPoints:NbPts, tags:['Battery']},
+            {name:'CO2', Unit:'ppm', precision:10, NbPoints:NbPts},
+            {name:'pressure', Unit:'Pa', precision:100, NbPoints:NbPts},
+            {name:'temperature', Unit:'C', precision:0.1, NbPoints:NbPts},
+            {name:'humidity', Unit:'%', precision:1, NbPoints:NbPts},
+        ]
+    // console.log('serie', serie)
+    
     var Request = {
             serie:serie,
-            DateStart: d3.isoParse("2022-05-16T00:00:00.000Z"),
-            DateEnd: new Date() // (new Date(Date.now() + 2 * (60 * 60 * 1000))) // (new date()).toISOString()
+            DateStart: d3.isoParse("2022-05-25T08:00:00.000Z"),
+            DateEnd: new Date(), // (new Date(Date.now() + 2 * (60 * 60 * 1000))) // (new date()).toISOString()
+            yScales:{},
         }
+</script>
+
+
+
+<script>
 
     // var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
     var colorScale = d3.scaleOrdinal(d3.schemePaired);
@@ -92,32 +112,38 @@
             case 0:
                 // Add the y Axis Left oriented Left
                 svg.append("g")
-                    .call(d3.axisLeft(Curve.yScale))
+                    .call(d3.axisLeft(Request.yScales[Curve.Unit]))
                     .call(g => g.selectAll(".tick text").append("tspan").text(Curve.Unit));
+                xAxis = 0;
                 break;
             case 1:
                 // Add the y Axis Right oriented Right
                 svg.append("g")
-                    .call(d3.axisRight(Curve.yScale))
+                    .call(d3.axisRight(Request.yScales[Curve.Unit]))
                     .call(g => g.selectAll(".tick text").append("tspan").text(Curve.Unit))
                     .attr("transform", "translate(" + width + ",0)");
+                xAxis = width;
                 break;
             case 2:
                 // Add the y Axis Left oriented Right
                 svg.append("g")
-                    .call(d3.axisRight(Curve.yScale))
+                    .call(d3.axisRight(Request.yScales[Curve.Unit]))
                     .call(g => g.selectAll(".tick text").append("tspan").text(Curve.Unit));            
+                xAxis = 0;
                 break;
             case 3:
                 // Add the y Axis Right oriented Left
                 svg.append("g")
-                    .call(d3.axisLeft(Curve.yScale))
+                    .call(d3.axisLeft(Request.yScales[Curve.Unit]))
                     .call(g => g.selectAll(".tick text").append("tspan").text(Curve.Unit))
                     .attr("transform", "translate(" + width + ",0)");
+                xAxis = width;
                 break;
             default:
+                xAxis = null;
                 break;
         }
+        return xAxis;
     }
 
     function mousemove() {
@@ -127,21 +153,25 @@
             var d0 = Curve.data[i - 1],
                 d1 = Curve.data[i],
                 d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+            // console.log('Request', Request);
+            // console.log('Curve', Curve);
             Curve.focus.selectAll("circle.y-"+Curve.Count)
-                .attr("transform","translate(" + Request.xScale(d.date) + "," +Curve.yScale(d.value) + ")");
+                .attr("transform","translate(" + Request.xScale(d.date) + "," +Request.yScales[Curve.Unit](d.value) + ")");
             Curve.focus.select("text.y1")
-                .attr("transform","translate(" + Request.xScale(d.date) + "," + Curve.yScale(d.value) + ")")
+                .attr("transform","translate(" + Request.xScale(d.date) + "," + Request.yScales[Curve.Unit](d.value) + ")")
                 .text(d.value+Curve.Unit);
             Curve.focus.select("text.y3")
-                .attr("transform","translate(" + Request.xScale(d.date) + "," +Curve.yScale(d.value) + ")")
+                .attr("transform","translate(" + Request.xScale(d.date) + "," +Request.yScales[Curve.Unit](d.value) + ")")
                 .text(formatDate(d.date));
-            Curve.focus.select(".x")
-                .attr("transform","translate(" + Request.xScale(d.date) + "," +Curve.yScale(d.value) + ")")
-                .attr("y2", height - Curve.yScale(d.value)-3);
-            Curve.focus.select(".y-"+Curve.Count)
-                .attr("transform","translate(" + width * -1 + "," +Curve.yScale(d.value) + ")")
-                .attr("x1", width)
-                .attr("x2", width + Request.xScale(d.date)-3);
+            // Curve.focus.select(".x")
+            //     .attr("transform","translate(" + Request.xScale(d.date) + "," +Request.yScales[Curve.Unit](d.value) + ")")
+            //     .attr("y2", height - Request.yScales[Curve.Unit](d.value)-3);
+            if (null != Curve.xAxis){
+                Curve.focus.select(".y-"+Curve.Count)
+                .attr("transform","translate(0," +Request.yScales[Curve.Unit](d.value) + ")")
+                .attr("x1",Curve.xAxis)
+                .attr("x2", Request.xScale(d.date));
+            }
         })
 
 
@@ -166,7 +196,7 @@
                 value: tags
             };
         }) : [];
-        console.log('Tags', Tags);
+        // console.log('Tags', Tags);
 
         d3.json('/API/db/read', {
             method:"POST",
@@ -191,21 +221,29 @@
         })
         .then(json => {
             // console.log('json=',json)
-
             serie.data = json.filter( function(d) { return d.mean !== null}).map(data => {
                 const date = d3.isoParse(data.time);
                 const value = data.mean;
                     return {date, value};
             });
-            console.log('serie=',serie)
+            // console.log('serie=',serie)
             return serie;
         })
         .then(
             Curve => {
-                Curve.yScale = d3.scaleLinear()
-                    .domain(d3.extent(Curve.data, d => d.value)) // [d3.min(Curve.data, d => d.value), d3.max(Curve.data, d => d.value)]
-                    .range([height, 0]);
-                // console.log('Curve.yScale=',Curve.yScale);
+                // console.log('Curve.unit=',Curve.Unit);
+                if (Request.yScales[Curve.Unit]){
+                    console.log('EXIST Request.yScales.[Curve.Unit]=', Request.yScales[Curve.Unit]);
+                    var dataDomain = Request.yScales[Curve.Unit].domain().concat(d3.extent(Curve.data, d => d.value))
+                    console.log('dataDomain',dataDomain);
+                    console.log('d3.extent(dataDomain)',d3.extent(dataDomain));
+                    console.log('d3.extent(dataDomain, d => d)',d3.extent(dataDomain, d => d));
+                    Request.yScales[Curve.Unit].domain(d3.extent(dataDomain, d => d));
+                } else{
+                    Request.yScales[Curve.Unit] = d3.scaleLinear()
+                        .domain(d3.extent(Curve.data, d => d.value)) // [d3.min(Curve.data, d => d.value), d3.max(Curve.data, d => d.value)]
+                        .range([height, 0]);
+                }
 
                 Curve.line = d3.line()
                     // .defined(function (d) { return d; })
@@ -213,21 +251,21 @@
                     // .defined(function (d) { return d.y !== null; })
                     // .defined(function (d) { return d.y; })
                     .x(d => Request.xScale(d.date))
-                    .y(d => Curve.yScale(d.value))
+                    .y(d => Request.yScales[Curve.Unit](d.value))
                     .curve(d3.curveMonotoneX) // curveBundle, curveCatmullRom.alpha(1), curveCardinal, curveMonotoneX
                 
                 console.log('Curve=',Curve)
 
-                axisBuild(Curve);
+                Curve.xAxis = axisBuild(Curve);
 
                 // Set the gradient
                 svg.append("linearGradient")
                     .attr("id", "line-gradient-"+Curve.Count)
                     .attr("gradientUnits", "userSpaceOnUse")
                     .attr("x1", 0)
-                    .attr("y1", Curve.yScale(d3.min(Curve.data, d => d.value)))
+                    .attr("y1", Request.yScales[Curve.Unit](d3.min(Curve.data, d => d.value)))
                     .attr("x2", 0)
-                    .attr("y2", Curve.yScale(d3.max(Curve.data, d => d.value)))
+                    .attr("y2", Request.yScales[Curve.Unit](d3.max(Curve.data, d => d.value)))
                     .selectAll("stop")
                     .data([
                         {offset: "0%", color: Curve.Color.low},
