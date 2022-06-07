@@ -64,17 +64,17 @@
     // var serie =  [{name:'CO2', Unit:'xx', precision:1, NbPoints:width, type:'type'}]
     var serie = [
             {name:'voltage', Unit:'V', precision:0.001, NbPoints:NbPts, tags:['PowerSupply']},
-            {name:'voltage', Unit:'V', precision:0.001, NbPoints:NbPts, tags:['Battery']},
             {name:'CO2', Unit:'ppm', precision:10, NbPoints:NbPts},
-            {name:'pressure', Unit:'Pa', precision:100, NbPoints:NbPts},
-            {name:'temperature', Unit:'C', precision:0.1, NbPoints:NbPts},
-            {name:'humidity', Unit:'%', precision:1, NbPoints:NbPts},
+            {name:'pressure', Unit:'Pa', precision:1, NbPoints:NbPts},
+            {name:'voltage', Unit:'V', precision:0.001, NbPoints:NbPts, tags:['Battery']},
+            {name:'temperature', Unit:'°C', precision:0.01, NbPoints:NbPts},
+            {name:'humidity', Unit:'%', precision:0.1, NbPoints:NbPts},
         ]
     // console.log('serie', serie)
     
     var Request = {
             serie:serie,
-            DateStart: d3.isoParse("2022-05-25T08:00:00.000Z"),
+            DateStart: d3.isoParse("2022-06-07T11:00:00.000Z"),
             DateEnd: new Date(), // (new Date(Date.now() + 2 * (60 * 60 * 1000))) // (new date()).toISOString()
             yScales:{},
         }
@@ -107,39 +107,40 @@
     var formatDate = d3.timeFormat("%Y-%m-%d %H:%M:%S"),
         bisectDate = d3.bisector(function(d) {return d.date; }).left;
 
-    function axisBuild(Curve){
-        switch (Curve.Count) {
+    function axisBuild(yAxe){
+        // console.log('yAxe['+yAxe.count+']',yAxe.Unit)
+        switch (yAxe.count) {
             case 0:
                 // Add the y Axis Left oriented Left
                 svg.append("g")
-                    .call(d3.axisLeft(Request.yScales[Curve.Unit]))
-                    .call(g => g.selectAll(".tick text").append("tspan").text(Curve.Unit));
+                    .call(d3.axisLeft(yAxe))
+                    .call(g => g.selectAll(".tick text").append("tspan").text(yAxe.Unit));
                 xAxis = 0;
                 break;
             case 1:
                 // Add the y Axis Right oriented Right
                 svg.append("g")
-                    .call(d3.axisRight(Request.yScales[Curve.Unit]))
-                    .call(g => g.selectAll(".tick text").append("tspan").text(Curve.Unit))
+                    .call(d3.axisRight(yAxe))
+                    .call(g => g.selectAll(".tick text").append("tspan").text(yAxe.Unit))
                     .attr("transform", "translate(" + width + ",0)");
                 xAxis = width;
                 break;
             case 2:
                 // Add the y Axis Left oriented Right
                 svg.append("g")
-                    .call(d3.axisRight(Request.yScales[Curve.Unit]))
-                    .call(g => g.selectAll(".tick text").append("tspan").text(Curve.Unit));            
+                    .call(d3.axisRight(yAxe))
+                    .call(g => g.selectAll(".tick text").append("tspan").text(yAxe.Unit));            
                 xAxis = 0;
                 break;
             case 3:
                 // Add the y Axis Right oriented Left
                 svg.append("g")
-                    .call(d3.axisLeft(Request.yScales[Curve.Unit]))
-                    .call(g => g.selectAll(".tick text").append("tspan").text(Curve.Unit))
+                    .call(d3.axisLeft(yAxe))
+                    .call(g => g.selectAll(".tick text").append("tspan").text(yAxe.Unit))
                     .attr("transform", "translate(" + width + ",0)");
                 xAxis = width;
                 break;
-            default:
+            default: // on ne peu afficher que 4 Axes, les suivant sont cache
                 xAxis = null;
                 break;
         }
@@ -160,9 +161,9 @@
             Curve.focus.select("text.y1")
                 .attr("transform","translate(" + Request.xScale(d.date) + "," + Request.yScales[Curve.Unit](d.value) + ")")
                 .text(d.value+Curve.Unit);
-            Curve.focus.select("text.y3")
-                .attr("transform","translate(" + Request.xScale(d.date) + "," +Request.yScales[Curve.Unit](d.value) + ")")
-                .text(formatDate(d.date));
+            // Curve.focus.select("text.y3")
+            //     .attr("transform","translate(" + Request.xScale(d.date) + "," +Request.yScales[Curve.Unit](d.value) + ")")
+            //     .text(formatDate(d.date));
             // Curve.focus.select(".x")
             //     .attr("transform","translate(" + Request.xScale(d.date) + "," +Request.yScales[Curve.Unit](d.value) + ")")
             //     .attr("y2", height - Request.yScales[Curve.Unit](d.value)-3);
@@ -183,22 +184,20 @@
             high:colorScale(2*serieCounter+1)
         }
         serie.Count = serieCounter++;
-        // console.log('serie.Count',serie.Count);
-
+        Request.yScales.count = 0
         // console.log('Serie['+serieCounter+']',serie.name, serie);
         // console.log('DateRange=', Request.DateStart, Request.DateEnd);
         // console.log('DateRange=', Request.DateStart.toISOString(), Request.DateEnd.toISOString());
         var Tags = serie.tags ? serie.tags.map(tags => {
-            console.log('tags', tags);
+            // console.log('tags', tags);
             return {
                 operator:"and",
                 name: "type",
                 value: tags
             };
         }) : [];
-        // console.log('Tags', Tags);
 
-        d3.json('/API/db/read', {
+        return d3.json('/API/db/read', { // collecte des data Raw aupres du server
             method:"POST",
             body: JSON.stringify({
                 serie: serie.name,
@@ -219,7 +218,7 @@
                 "Content-type": "application/json; charset=UTF-8"
             }
         })
-        .then(json => {
+        .then(json => { // Mise en forme des data au format pour D3.js
             // console.log('json=',json)
             serie.data = json.filter( function(d) { return d.mean !== null}).map(data => {
                 const date = d3.isoParse(data.time);
@@ -229,115 +228,144 @@
             // console.log('serie=',serie)
             return serie;
         })
-        .then(
-            Curve => {
-                // console.log('Curve.unit=',Curve.Unit);
-                if (Request.yScales[Curve.Unit]){
-                    console.log('EXIST Request.yScales.[Curve.Unit]=', Request.yScales[Curve.Unit]);
-                    var dataDomain = Request.yScales[Curve.Unit].domain().concat(d3.extent(Curve.data, d => d.value))
-                    console.log('dataDomain',dataDomain);
-                    console.log('d3.extent(dataDomain)',d3.extent(dataDomain));
-                    console.log('d3.extent(dataDomain, d => d)',d3.extent(dataDomain, d => d));
-                    Request.yScales[Curve.Unit].domain(d3.extent(dataDomain, d => d));
-                } else{
-                    Request.yScales[Curve.Unit] = d3.scaleLinear()
-                        .domain(d3.extent(Curve.data, d => d.value)) // [d3.min(Curve.data, d => d.value), d3.max(Curve.data, d => d.value)]
+        .then( // Construction des Axes X et raprochement en cas d'unite similaire
+            Serie => {
+                if (!Request.yScales[Serie.Unit]){ // si l'axe Y de cette unite n'existe pas
+                    Request.yScales[Serie.Unit] = d3.scaleLinear()
+                        .domain(d3.extent(Serie.data, d => d.value)) // [d3.min(Serie.data, d => d.value), d3.max(Serie.data, d => d.value)]
                         .range([height, 0]);
+                    Request.yScales[Serie.Unit].count = (Request.yScales.count)
+                    Request.yScales.count++
+                } else{
+                    var dataDomain = Request.yScales[Serie.Unit]
+                                            .domain()
+                                            .concat(d3.extent(Serie.data, d => d.value))
+                    // console.log('dataDomain',dataDomain);
+                    Request.yScales[Serie.Unit]
+                            .domain(d3.extent(dataDomain));
+                    // console.log('d3.extent(dataDomain)',Request.yScales[Serie.Unit].domain());
                 }
-
-                Curve.line = d3.line()
-                    // .defined(function (d) { return d; })
-                    // .defined(function (d) { return d[1] !== null; })
-                    // .defined(function (d) { return d.y !== null; })
-                    // .defined(function (d) { return d.y; })
-                    .x(d => Request.xScale(d.date))
-                    .y(d => Request.yScales[Curve.Unit](d.value))
-                    .curve(d3.curveMonotoneX) // curveBundle, curveCatmullRom.alpha(1), curveCardinal, curveMonotoneX
-                
-                console.log('Curve=',Curve)
-
-                Curve.xAxis = axisBuild(Curve);
-
-                // Set the gradient
-                svg.append("linearGradient")
-                    .attr("id", "line-gradient-"+Curve.Count)
-                    .attr("gradientUnits", "userSpaceOnUse")
-                    .attr("x1", 0)
-                    .attr("y1", Request.yScales[Curve.Unit](d3.min(Curve.data, d => d.value)))
-                    .attr("x2", 0)
-                    .attr("y2", Request.yScales[Curve.Unit](d3.max(Curve.data, d => d.value)))
-                    .selectAll("stop")
-                    .data([
-                        {offset: "0%", color: Curve.Color.low},
-                        {offset: "100%", color: Curve.Color.high}
-                    ])
-                    .enter().append("stop")
-                    .attr("offset", function(d) { return d.offset; })
-                    .attr("stop-color", function(d) { return d.color; });
-
-                var line = svg.append("path")
-                    .datum(Curve.data)
-                    .attr("z-index", -1)
-                    .attr("fill", "none")
-                    .attr("stroke", "url(#line-gradient-"+Curve.Count+")" )
-                    .attr("stroke-width", 1)
-                    .attr("d", Curve.line)
-                    .transition()
-                    .duration(1000)
-
-                // Construction du cursseur
-                Curve.focus = svg.append("g") 
-                            .style("display", "none");
-
-                // append the x line
-                Curve.focus.append("line")
-                    .attr("class", "x")
-                    .style("stroke", Curve.Color.high)
-                    .style("stroke-dasharray", "3,3") // pointillees
-                    .style("opacity", 0.5)
-                    .attr("y1", 0)
-                    .attr("y2", height);
-
-                // append the y line
-                Curve.focus.append("line")
-                    .attr("class", "y-"+Curve.Count)
-                    .style("stroke", Curve.Color.high)
-                    .style("stroke-dasharray", "3,3") // pointillees
-                    .style("opacity", 0.5)
-                    .attr("x1", width)
-                    .attr("x2", width);
-
-                // append the circle at the intersection 
-                Curve.focus.append("circle")
-                    .attr("class", "y-"+Curve.Count)
-                    .style("fill", "none")
-                    .style("stroke-width", "5px")
-                    .style("stroke", "white")
-                    .attr("r", 6);
-                Curve.focus.append("circle")
-                    .attr("class", "y-"+Curve.Count)
-                    .style("fill", "none")
-                    .style("stroke", Curve.Color.high)
-                    .attr("r", 6);
-
-                // place the value at the intersection
-                Curve.focus.append("text")
-                    .attr("class", "y1 shadow")
-                    .attr("dx", 8)
-                    .attr("dy", "-.3em");
-
-                // place the date at the intersection
-                Curve.focus.append("text")
-                    .attr("class", "y3 shadow")
-                    .attr("dx", 8)
-                    .attr("dy", "1em");
-
+                // return Serie;
             }
         )
     }
 
     var serieCounter=0;
-    Request.serie.forEach(serie => GetData(serie))
+    const DataPromise = Request.serie.map(serie => GetData(serie))
+    Promise
+        .all(DataPromise)
+        .then(
+            () => {
+                // console.log('Request.yScales',Request.yScales);
+                // Request.yScales.map(
+                //     yAxes => {
+                //         console.log('yScale',yScale);
+                //     }
+                // )
+
+                // console.log('Request.serie',Request.serie);
+                return Request.serie.map(
+                    Curve => {
+                        // console.log('Curve=',Curve)
+                        // console.log('Request.yScales',Request.yScales);
+                        // console.log('Request.yScales['+Curve.Unit+']',Request.yScales[(Curve.Unit)]);
+                        Curve.line = d3.line()
+                            // .defined(function (d) { return d; })
+                            // .defined(function (d) { return d[1] !== null; })
+                            // .defined(function (d) { return d.y !== null; })
+                            // .defined(function (d) { return d.y; })
+                            .x(d => Request.xScale(d.date))
+                            .y(d => Request.yScales[Curve.Unit](d.value))
+                            .curve(d3.curveMonotoneX) // curveBundle, curveCatmullRom.alpha(1), curveCardinal, curveMonotoneX
+                        Curve.xAxis = axisBuild(Request.yScales[(Curve.Unit)]);
+
+                        // Set the gradient
+                        svg.append("linearGradient")
+                            .attr("id", "line-gradient-"+Curve.Count)
+                            .attr("gradientUnits", "userSpaceOnUse")
+                            .attr("x1", 0)
+                            .attr("y1", Request.yScales[Curve.Unit](d3.min(Curve.data, d => d.value)))
+                            .attr("x2", 0)
+                            .attr("y2", Request.yScales[Curve.Unit](d3.max(Curve.data, d => d.value)))
+                            .selectAll("stop")
+                            .data([
+                                {offset: "0%", color: Curve.Color.low},
+                                {offset: "100%", color: Curve.Color.high}
+                            ])
+                            .enter().append("stop")
+                            .attr("offset", function(d) { return d.offset; })
+                            .attr("stop-color", function(d) { return d.color; });
+
+                        var line = svg.append("path")
+                            .datum(Curve.data)
+                            .attr("z-index", -1)
+                            .attr("fill", "none")
+                            .attr("stroke", "url(#line-gradient-"+Curve.Count+")" )
+                            .attr("stroke-width", 1)
+                            .attr("d", Curve.line)
+                            .transition()
+                            .duration(1000)
+
+                        // Construction du cursseur
+                        Curve.focus = svg.append("g") 
+                                    .style("display", "none");
+
+                        // append the x line
+                        Curve.focus.append("line")
+                            .attr("class", "x")
+                            .style("stroke", Curve.Color.high)
+                            .style("stroke-dasharray", "3,3") // pointillees
+                            .style("opacity", 0.5)
+                            .attr("y1", 0)
+                            .attr("y2", height);
+
+                        // append the y line
+                        Curve.focus.append("line")
+                            .attr("class", "y-"+Curve.Count)
+                            .style("stroke", Curve.Color.high)
+                            .style("stroke-dasharray", "3,3") // pointillees
+                            .style("opacity", 0.5)
+                            .attr("x1", width)
+                            .attr("x2", width);
+
+                        // append the circle at the intersection 
+                        Curve.focus.append("circle")
+                            .attr("class", "y-"+Curve.Count)
+                            .style("fill", "none")
+                            .style("stroke-width", "5px")
+                            .style("stroke", "white")
+                            .attr("r", 6);
+                        Curve.focus.append("circle")
+                            .attr("class", "y-"+Curve.Count)
+                            .style("fill", "none")
+                            .style("stroke", Curve.Color.high)
+                            .attr("r", 6);
+
+                        // place the value at the intersection
+                        Curve.focus.append("text")
+                            .attr("class", "y1 shadow")
+                            .attr("dx", 8)
+                            .attr("dy", "-.3em");
+
+                        // place the date at the intersection
+                        Curve.focus.append("text")
+                            .attr("class", "y3 shadow")
+                            .attr("dx", 8)
+                            .attr("dy", "1em");
+
+                        return Curve
+                    }
+                )
+            }
+        )
+        .then(
+            Curve => {
+                console.log('Curve=',Curve);
+            }
+        )
+    // Request.yScales.forEach(yAxes => ConstructYAxes(yAxes))
+    // Request.serie.forEach(serie => DrawCurve(serie))
+
     // append the rectangle to capture mouse
     var Sensitive = svg.append("rect")
         .attr("width", width)
