@@ -156,22 +156,25 @@
                 d = x0 - d0.date > d1.date - x0 ? d1 : d0;
             // console.log('Request', Request);
             // console.log('Curve', Curve);
-            Curve.focus.selectAll("circle.y-"+Curve.Count)
+            Curve.focus.selectAll("circle.y-"+Curve.Count) // Cercle
                 .attr("transform","translate(" + Request.xScale(d.date) + "," +Request.yScales[Curve.Unit](d.value) + ")");
-            Curve.focus.select("text.y1")
+            Curve.focus.select("text.y1") // Valeur et Unite
                 .attr("transform","translate(" + Request.xScale(d.date) + "," + Request.yScales[Curve.Unit](d.value) + ")")
                 .text(d.value+Curve.Unit);
-            // Curve.focus.select("text.y3")
-            //     .attr("transform","translate(" + Request.xScale(d.date) + "," +Request.yScales[Curve.Unit](d.value) + ")")
-            //     .text(formatDate(d.date));
-            // Curve.focus.select(".x")
-            //     .attr("transform","translate(" + Request.xScale(d.date) + "," +Request.yScales[Curve.Unit](d.value) + ")")
-            //     .attr("y2", height - Request.yScales[Curve.Unit](d.value)-3);
+            if(Curve.Count == 0){
+                Curve.focus.select(".x") // repere vertical commun
+                    .attr("transform","translate(" + Request.xScale(d.date) + ",0)")
+                    // .attr("y1", height)
+                    .attr("y2", height);
+                Curve.focus.select("text.y3") // date
+                    .attr("transform","translate(" + (Request.xScale(d.date)-87) + ","+(height-18)+")")
+                    .text(formatDate(d.date));
+            }
             if (null != Curve.xAxis){
-                Curve.focus.select(".y-"+Curve.Count)
-                .attr("transform","translate(0," +Request.yScales[Curve.Unit](d.value) + ")")
-                .attr("x1",Curve.xAxis)
-                .attr("x2", Request.xScale(d.date));
+                Curve.focus.select(".y-"+Curve.Count) // repere Y horizontal
+                    .attr("transform","translate(0," +Request.yScales[Curve.Unit](d.value) + ")")
+                    .attr("x1",Curve.xAxis)
+                    .attr("x2", Request.xScale(d.date));
             }
         })
 
@@ -256,13 +259,6 @@
         .all(DataPromise)
         .then(
             () => {
-                // console.log('Request.yScales',Request.yScales);
-                // Request.yScales.map(
-                //     yAxes => {
-                //         console.log('yScale',yScale);
-                //     }
-                // )
-
                 // console.log('Request.serie',Request.serie);
                 return Request.serie.map(
                     Curve => {
@@ -310,23 +306,32 @@
                         Curve.focus = svg.append("g") 
                                     .style("display", "none");
 
-                        // append the x line
-                        Curve.focus.append("line")
-                            .attr("class", "x")
-                            .style("stroke", Curve.Color.high)
-                            .style("stroke-dasharray", "3,3") // pointillees
-                            .style("opacity", 0.5)
-                            .attr("y1", 0)
-                            .attr("y2", height);
+                        if(Curve.Count == 0){
+                            // append the X line Verticale
+                            Curve.focus.append("line")
+                                .attr("class", "x")
+                                .style("stroke", 'gray')
+                                .style("stroke-dasharray", "3,3") // pointillees
+                                // .style("opacity", 0.5)
+                                .attr("y1", 0)
+                                .attr("y2", height);
 
-                        // append the y line
-                        Curve.focus.append("line")
-                            .attr("class", "y-"+Curve.Count)
-                            .style("stroke", Curve.Color.high)
-                            .style("stroke-dasharray", "3,3") // pointillees
-                            .style("opacity", 0.5)
-                            .attr("x1", width)
-                            .attr("x2", width);
+                            // place the date at the intersection
+                            Curve.focus.append("text")
+                                .attr("class", "y3 shadow")
+                                .attr("dx", 8)
+                                .attr("dy", "1em");
+                        }
+                        if (null != Curve.xAxis){
+                            // append the y line Horizontale
+                            Curve.focus.append("line")
+                                .attr("class", "y-"+Curve.Count)
+                                .style("stroke", Curve.Color.high)
+                                .style("stroke-dasharray", "3,3") // pointillees
+                                .style("opacity", 0.5)
+                                .attr("x1", width)
+                                .attr("x2", width);
+                        }
 
                         // append the circle at the intersection 
                         Curve.focus.append("circle")
@@ -335,6 +340,7 @@
                             .style("stroke-width", "5px")
                             .style("stroke", "white")
                             .attr("r", 6);
+
                         Curve.focus.append("circle")
                             .attr("class", "y-"+Curve.Count)
                             .style("fill", "none")
@@ -347,20 +353,9 @@
                             .attr("dx", 8)
                             .attr("dy", "-.3em");
 
-                        // place the date at the intersection
-                        Curve.focus.append("text")
-                            .attr("class", "y3 shadow")
-                            .attr("dx", 8)
-                            .attr("dy", "1em");
-
                         return Curve
                     }
                 )
-            }
-        )
-        .then(
-            Curve => {
-                console.log('Curve=',Curve);
             }
         )
     // Request.yScales.forEach(yAxes => ConstructYAxes(yAxes))
