@@ -23,8 +23,20 @@
 
         .shadow{
             box-shadow: 10px -10px 5px #00f;
-            text-shadow: -2px 0 2px #fff, 0 2px 2px #fff, 2px 0 2px #fff, 0 -2px 2px #fff,
-                         -2px 2px 2px #fff, 2px 2px 2px #fff, 2px -2px 2px #fff, -2px -2px 2px #fff;
+            text-shadow: 0px 0 3px #584f3e, 0px 0 2px #584f3e;
+            /* text-shadow: -2px 0 2px #fff, 0 2px 2px #fff, 2px 0 2px #fff, 0 -2px 2px #fff,
+                         -2px 2px 2px #fff, 2px 2px 2px #fff, 2px -2px 2px #fff, -2px -2px 2px #fff; */
+        }
+        body {
+            margin: 0;
+            background-color: #3c3c3c; /* 3c3c3c 463f32 */
+        }
+        .domain, .tick {
+            color: #d9d9d9;
+        }
+        .measure {
+            color: #d9d9d9;
+            font-size: 1em;
         }
         
         </style>
@@ -74,16 +86,14 @@
     
     var Request = {
             serie:serie,
-            DateStart: d3.isoParse("2022-06-07T11:00:00.000Z"),
+            DateStart: d3.isoParse("2022-06-16T19:00:00.000Z"),
             DateEnd: new Date(), // (new Date(Date.now() + 2 * (60 * 60 * 1000))) // (new date()).toISOString()
             yScales:{},
+            xScale:{}
         }
 </script>
 
-
-
 <script>
-
     // var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
     var colorScale = d3.scaleOrdinal(d3.schemePaired);
     
@@ -92,19 +102,21 @@
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-        
+    
+
+
     // definition de l'echelle horizontale commune
     Request.xScale = d3.scaleUtc()
                 .domain([d3.isoParse(Request.DateStart), d3.isoParse(Request.DateEnd)])
                 .range([0, width]);
-    
-        // Add the x Axis
-        svg.append("g")
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(Request.xScale))
-            .transition().duration(1000).call(d3.axisBottom(Request.xScale));
+    // console.log(Request.DateEnd, Request.DateEnd.tolocal() )
+    // Add the x Axis
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(Request.xScale))
+        .transition().duration(1000).call(d3.axisBottom(Request.xScale));
 
-    var formatDate = d3.timeFormat("%Y-%m-%d %H:%M:%S"),
+    const formatDate = d3.timeFormat("%Y-%m-%d %H:%M:%S"),
         bisectDate = d3.bisector(function(d) {return d.date; }).left;
 
     function axisBuild(yAxe){
@@ -115,7 +127,7 @@
                 svg.append("g")
                     .call(d3.axisLeft(yAxe))
                     .call(g => g.selectAll(".tick text").append("tspan").text(yAxe.Unit));
-                xAxis = 0;
+                xPosOfYAxis = 0;
                 break;
             case 1:
                 // Add the y Axis Right oriented Right
@@ -123,14 +135,14 @@
                     .call(d3.axisRight(yAxe))
                     .call(g => g.selectAll(".tick text").append("tspan").text(yAxe.Unit))
                     .attr("transform", "translate(" + width + ",0)");
-                xAxis = width;
+                xPosOfYAxis = width;
                 break;
             case 2:
                 // Add the y Axis Left oriented Right
                 svg.append("g")
                     .call(d3.axisRight(yAxe))
                     .call(g => g.selectAll(".tick text").append("tspan").text(yAxe.Unit));            
-                xAxis = 0;
+                xPosOfYAxis = 0;
                 break;
             case 3:
                 // Add the y Axis Right oriented Left
@@ -138,13 +150,13 @@
                     .call(d3.axisLeft(yAxe))
                     .call(g => g.selectAll(".tick text").append("tspan").text(yAxe.Unit))
                     .attr("transform", "translate(" + width + ",0)");
-                xAxis = width;
+                xPosOfYAxis = width;
                 break;
             default: // on ne peu afficher que 4 Axes, les suivant sont cache
-                xAxis = null;
+                xPosOfYAxis = null;
                 break;
         }
-        return xAxis;
+        return xPosOfYAxis;
     }
 
     function mousemove() {
@@ -170,15 +182,13 @@
                     .attr("transform","translate(" + (Request.xScale(d.date)-87) + ","+(height-18)+")")
                     .text(formatDate(d.date));
             }
-            if (null != Curve.xAxis){
+            if (null != Curve.xPosOfYAxis){
                 Curve.focus.select(".y-"+Curve.Count) // repere Y horizontal
                     .attr("transform","translate(0," +Request.yScales[Curve.Unit](d.value) + ")")
-                    .attr("x1",Curve.xAxis)
+                    .attr("x1",Curve.xPosOfYAxis)
                     .attr("x2", Request.xScale(d.date));
             }
         })
-
-
     }
 
     const GetData = function(serie) {
@@ -188,9 +198,6 @@
         }
         serie.Count = serieCounter++;
         Request.yScales.count = 0
-        // console.log('Serie['+serieCounter+']',serie.name, serie);
-        // console.log('DateRange=', Request.DateStart, Request.DateEnd);
-        // console.log('DateRange=', Request.DateStart.toISOString(), Request.DateEnd.toISOString());
         var Tags = serie.tags ? serie.tags.map(tags => {
             // console.log('tags', tags);
             return {
@@ -205,11 +212,6 @@
             body: JSON.stringify({
                 serie: serie.name,
                 tags: Tags,
-                    // [{
-                    //     operator:"and",
-                    //     name: "type",
-                    //     value: serie.type
-                    // }]
                 times: {
                     start: Request.DateStart,
                     end: Request.DateEnd
@@ -255,7 +257,7 @@
 
     var serieCounter=0;
     const DataPromise = Request.serie.map(serie => GetData(serie))
-    Promise
+    const DrawPromise = Promise
         .all(DataPromise)
         .then(
             () => {
@@ -273,7 +275,8 @@
                             .x(d => Request.xScale(d.date))
                             .y(d => Request.yScales[Curve.Unit](d.value))
                             .curve(d3.curveMonotoneX) // curveBundle, curveCatmullRom.alpha(1), curveCardinal, curveMonotoneX
-                        Curve.xAxis = axisBuild(Request.yScales[(Curve.Unit)]);
+
+                        Curve.xPosOfYAxis = axisBuild(Request.yScales[(Curve.Unit)]);
 
                         // Set the gradient
                         svg.append("linearGradient")
@@ -285,92 +288,111 @@
                             .attr("y2", Request.yScales[Curve.Unit](d3.max(Curve.data, d => d.value)))
                             .selectAll("stop")
                             .data([
-                                {offset: "0%", color: Curve.Color.low},
+                                {offset: "0%", color: Curve.Color.high},
                                 {offset: "100%", color: Curve.Color.high}
                             ])
                             .enter().append("stop")
                             .attr("offset", function(d) { return d.offset; })
                             .attr("stop-color", function(d) { return d.color; });
 
-                        var line = svg.append("path")
-                            .datum(Curve.data)
-                            .attr("z-index", -1)
-                            .attr("fill", "none")
-                            .attr("stroke", "url(#line-gradient-"+Curve.Count+")" )
-                            .attr("stroke-width", 1)
-                            .attr("d", Curve.line)
-                            .transition()
-                            .duration(1000)
+                            Curve.domLine = svg.append("path")
+                                .datum(Curve.data)
+                                .attr("z-index", -1)
+                                .attr("fill", "none")
+                                .attr("stroke", "url(#line-gradient-"+Curve.Count+")" )
+                                .attr("stroke-width", 1)
+                                .attr("d", Curve.line)
+                                .transition()
+                                .duration(1000)
 
-                        // Construction du cursseur
-                        Curve.focus = svg.append("g") 
-                                    .style("display", "none");
 
-                        if(Curve.Count == 0){
-                            // append the X line Verticale
-                            Curve.focus.append("line")
-                                .attr("class", "x")
-                                .style("stroke", 'gray')
-                                .style("stroke-dasharray", "3,3") // pointillees
-                                // .style("opacity", 0.5)
-                                .attr("y1", 0)
-                                .attr("y2", height);
-
-                            // place the date at the intersection
-                            Curve.focus.append("text")
-                                .attr("class", "y3 shadow")
-                                .attr("dx", 8)
-                                .attr("dy", "1em");
-                        }
-                        if (null != Curve.xAxis){
-                            // append the y line Horizontale
-                            Curve.focus.append("line")
-                                .attr("class", "y-"+Curve.Count)
-                                .style("stroke", Curve.Color.high)
-                                .style("stroke-dasharray", "3,3") // pointillees
-                                .style("opacity", 0.5)
-                                .attr("x1", width)
-                                .attr("x2", width);
-                        }
-
-                        // append the circle at the intersection 
-                        Curve.focus.append("circle")
-                            .attr("class", "y-"+Curve.Count)
-                            .style("fill", "none")
-                            .style("stroke-width", "5px")
-                            .style("stroke", "white")
-                            .attr("r", 6);
-
-                        Curve.focus.append("circle")
-                            .attr("class", "y-"+Curve.Count)
-                            .style("fill", "none")
-                            .style("stroke", Curve.Color.high)
-                            .attr("r", 6);
-
-                        // place the value at the intersection
-                        Curve.focus.append("text")
-                            .attr("class", "y1 shadow")
-                            .attr("dx", 8)
-                            .attr("dy", "-.3em");
 
                         return Curve
                     }
                 )
             }
         )
+        .then(() => {
+            Request.serie.map(
+                Curve => {
+
+                    // Construction du cursseur
+                    Curve.focus = svg.append("g") 
+                                // .style("display", "none");
+
+                    if(Curve.Count == 0){
+                        // append the X line Verticale
+                        Curve.focus.append("line")
+                            .attr("class", "x")
+                            .style("stroke", 'gray')
+                            .style("stroke-dasharray", "3,3") // pointillees
+                            // .style("opacity", 0.5)
+                            .attr("y1", 0)
+                            .attr("y2", height);
+
+                        // place the date at the intersection
+                        Curve.focus.append("text")
+                            .attr("class", "y3 measure shadow")
+                            .attr("dx", 8)
+                            .attr("dy", "1em");
+                    }
+                    if (null != Curve.xPosOfYAxis){
+                        // append the y line Horizontale
+                        Curve.focus.append("line")
+                            .attr("class", "y-"+Curve.Count)
+                            .style("stroke", Curve.Color.high)
+                            .style("stroke-dasharray", "3,3") // pointillees
+                            // .style("opacity", 0.8)
+                            .attr("x1", width)
+                            .attr("x2", width);
+                    }
+                    // append the circle at the intersection 
+                    Curve.focus.append("circle")
+                        .attr("class", "y-"+Curve.Count)
+                        .style("fill", "none")
+                        .style("stroke-width", "5px")
+                        .style("stroke", "#584f3e")
+                        .attr("r", 6);
+
+                    Curve.focus.append("circle")
+                        .attr("class", "y-"+Curve.Count)
+                        .style("fill", "none")
+                        .style("stroke", Curve.Color.high)
+                        .attr("r", 6);
+
+                    // date the value text
+                    Curve.focus.append("text")
+                        .attr("class", "y1 measure shadow")
+                        // .style("style", "color:#fff")
+                        .attr("dx", 8)
+                        .attr("dy", "-.3em");
+
+                    console.log('Curve=',Curve)
+                }
+            )
+        })
     // Request.yScales.forEach(yAxes => ConstructYAxes(yAxes))
     // Request.serie.forEach(serie => DrawCurve(serie))
 
+    const zoom = d3.zoom()
+        .scaleExtent([1, 4096])
+        .extent([[margin.left, 0], [width - margin.right, height]])
+        .translateExtent([[margin.left, -Infinity], [width - margin.right, Infinity]])
+        .on("zoom", zoomed);
+
     // append the rectangle to capture mouse
-    var Sensitive = svg.append("rect")
+    const Sensitive = svg.append("rect")
         .attr("width", width)
         .attr("height", height)
         .style("fill", "none")
         .style("pointer-events", "all")
         .on("mouseover", function() { Request.serie.forEach(Curve => Curve.focus.style("display", null)); })
-        .on("mouseout", function() { Request.serie.forEach(Curve => Curve.focus.style("display", "none")); })
-        .on("mousemove", mousemove);
-    
+        // .on("mouseout", function() { Request.serie.forEach(Curve => Curve.focus.style("display", "none")); })
+        .on("mousemove", mousemove)
+        .call(zoom)
 
+        function zoomed(params) {
+            console.log('zoomed')
+        }
 </script>
 </html>
