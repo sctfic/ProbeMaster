@@ -5,6 +5,9 @@ const app = express();
 // const ssh2JS = require('./network/ssh2');
 app.use(express.json());
 
+require('./Childrens/Game/Code')(app)
+require('./Childrens/Chataignes/index')(app)
+require('./Childrens/Roblox/index')(app)
 require('./routesAPI/ping')(app)
 require('./routesAPI/GPIO')(app)
 require('./routesAPI/interfaces')(app)
@@ -25,6 +28,6 @@ app
 		// response.render('404', { url: request.url });
 		response.json({ error: '404 Not found !', url: request.url  });
 		return;
-	  });
+	});
 
 module.exports = app;
