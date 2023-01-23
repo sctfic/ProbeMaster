@@ -1,11 +1,18 @@
     function ToggleCurve(ClickedCurve,ID) {
+        var addserie = JSON.parse(d3.select("#item_"+ID).attr('value'));
         var legend = d3.select("#item_"+ID+" .miniLegend");
         var path = d3.select("#Curve_"+ID);
         if (ClickedCurve.checked) {
             path
                 .attr("stroke", "coral" )
                 .attr("stroke-width", 2);
-                serie.push({name:'pressure', Unit:'Pa', precision:1, NbPoints:NbPts},)
+                // serie.push({name:'pressure', Unit:'Pa', precision:1, NbPoints:NbPts},)
+                // const DataPromise = Request.serie.map(serie => GetDataFull(addserie))
+                Request.serie.push(addserie);
+                console.log('Add Serie',Request.serie);
+
+                const DataPromise = Request.serie.map(serie => GetDataFull(serie))
+                DrawNewSeries(DataPromise,[addserie]);
         } else {
             path
                 .attr("stroke", "steelblue" )
@@ -21,7 +28,7 @@
                     }
                 )
             }
-        main()
+        // main()
     }
     
     // set the dimensions and margins of the graph
@@ -33,38 +40,29 @@
     var miniDateStart= new Date(Date.now() - 30 * (24 * 60 * 60 * 1000));
     var miniDateEnd= new Date(); // (new Date(Date.now() + 2 * (60 * 60 * 1000))) // (new date()).toISOString()   
 
-    var miniserie = [
-        {name:'voltage', Unit:'V', precision:0.001, NbPoints:miniNbPts, tags:['PowerSupply']},
-        {name:'CO2', Unit:'ppm', precision:10, NbPoints:miniNbPts},
-        {name:'pressure', Unit:'Pa', precision:1, NbPoints:miniNbPts},
-        {name:'voltage', Unit:'V', precision:0.001, NbPoints:miniNbPts, tags:['Battery']},
-        {name:'temperature', Unit:'°C', precision:0.01, NbPoints:miniNbPts},
-        {name:'humidity', Unit:'%', precision:0.1, NbPoints:miniNbPts},
-    ]
-    // console.log(miniserie);
+    d3.json('/API/db/list')
+        .then(
+            json => { // Mise en forme des data au format pour D3.js
+                json.map(
+                    serie => {
+                        serie.NbPoints = miniNbPts;
+                        serie.times = {
+                            start: miniDateStart,
+                            end: miniDateEnd
+                        }
+                        serie.tags = serie.tags.map(tag => {return 'and '+tag});
+                        GetDataMini(serie);
+                    }
+                )
+            }
+        )
 
-    const GetData = function(_serie) {
-        _serie.tags = _serie.tags ? _serie.tags.map(tags => {
-            // console.log('tags', tags);
-            return {
-                operator:"and",
-                name: "type",
-                value: tags
-            };
-        }) : [];
+    const GetDataMini = function(_serie) {
+        var serieJson = JSON.stringify(_serie);
+        // console.log(_serie);
+        // console.log(serieJson);
 
-        var serieJson = JSON.stringify({
-            serie: _serie.name,
-            tags: _serie.tags,
-            times: {
-                start: miniDateStart,
-                end: miniDateEnd
-            },
-            precision: _serie.precision,
-            NbPoints: _serie.NbPoints
-        })
-
-        var ID = id(); // getHash(_serie.name+'.'+Tags)
+        var ID = id(serieJson);
         // append the svg object to the body of the page
         // d3.select("#leftlistCurve")
         //     .attr("width", width + margin.left + margin.right);
@@ -87,7 +85,8 @@
 
         // console.log(_serie);
         nextMini.append("p")
-                .text(_serie.name) // +" "+_serie.tags.value -join('-')
+                .text(_serie.name)
+                .attr("title", _serie.tags.join("\n"))
                 .attr("class", "miniLegend");
 
         var minisvg = minsvg.append("g")
@@ -159,5 +158,4 @@
                     return Curve
                 }
             )
-        }
-        miniserie.map(mserie => GetData(mserie));
+    }

@@ -222,14 +222,21 @@ h1 {
           NbPts = Math.round(width/2);
 
           // console.log('areaWidth',areaWidth, 'areaHeight',areaHeight, 'margin',margin, 'width',width, 'height',height, 'NbPts',NbPts)
-          serie = [
-              // {name:'voltage', Unit:'V', precision:0.001, NbPoints:NbPts, tags:['PowerSupply']},
-              // {name:'CO2', Unit:'ppm', precision:10, NbPoints:NbPts},
-              // {name:'pressure', Unit:'Pa', precision:1, NbPoints:NbPts},
-              // {name:'voltage', Unit:'V', precision:0.001, NbPoints:NbPts, tags:['Battery']},
-              {name:'temperature', Unit:'°C', precision:0.01, NbPoints:NbPts},
-              // {name:'humidity', Unit:'%', precision:0.1, NbPoints:NbPts},
-          ]
+          DefaultSerie = [
+                    {
+                      "name":"temperature",
+                      "Unit":"°C",
+                      "precision":0.1,
+                      "NbPoints":NbPts,
+                      "tags":[
+                        "and area=serramoune",
+                        "and location=indoor",
+                        "and probe=ESP32_Probe_01",
+                        "and room=livingroom",
+                        "and type=test"
+                      ]
+                    }
+          ];
           WaitResize = setTimeout(main, 200);
           
       }, true);
