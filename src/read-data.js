@@ -18,11 +18,11 @@ module.exports = function(app){
                 console.log('Available measurement names : [' + names.join('], [') + ']')
             })
         .catch(error => console.log({ error }));
-    // influx.getSeries()
-    // 	.then((series) => {
-    // 		console.log("Available Series names :\n\t[" + series.join("]\n\t[") + ']')
-    // 	})
-    // 	.catch(error => console.log({ error }));
+    influx.getSeries()
+    	.then((series) => {
+    		console.log("Available Series names :\n\t[" + series.join("]\n\t[") + ']')
+    	})
+    	.catch(error => console.log({ error }));
 
 }
 
