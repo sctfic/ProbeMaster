@@ -1,15 +1,10 @@
+
+
 function main() {
-    serie = [
-        {name:'voltage', Unit:'V', precision:0.001, NbPoints:NbPts, tags:['PowerSupply']},
-        {name:'CO2', Unit:'ppm', precision:10, NbPoints:NbPts},
-        {name:'pressure', Unit:'Pa', precision:1, NbPoints:NbPts},
-        {name:'voltage', Unit:'V', precision:0.001, NbPoints:NbPts, tags:['Battery']},
-        {name:'temperature', Unit:'°C', precision:0.01, NbPoints:NbPts},
-        {name:'humidity', Unit:'%', precision:0.1, NbPoints:NbPts},
-    ]
+    console.log(serie)
     Request = {
         serie:serie,
-        DateStart: new Date(Date.now() - 14 * (24 * 60 * 60 * 1000)),
+        DateStart: new Date(Date.now() - 280 * (24 * 60 * 60 * 1000)),
         DateEnd: new Date(), // (new Date(Date.now() + 2 * (60 * 60 * 1000))) // (new date()).toISOString()
         yScales:{},
         xScale:{}

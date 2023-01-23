@@ -20,23 +20,17 @@
             /* border-style: solid;
             border-width: 1px;
             list-style-type: none; */
-            margin: 0;
+            margin: 20px 0;
             padding: 0;
         }
         li {
-            padding: 2px;
-            border-bottom: 1px solid coral;
+            padding: 2px 2px 10px 2px;
+            margin: 0;
+            border-bottom: 1px solid #3c3c3c;
         }
-        /* li:hover {
-            margin: 1px;
-            border: 1px solid coral;
-        } */
-        /* li:hover{
-          fill: #ff7710;
-          color: #ff7710;
-          stroke: #ff7710;
-          stroke-width: 0.5px;
-        } */
+        label {
+          margin: 0;
+        }
         li:hover svg > g > path {
           stroke:coral;
           /* stroke-width: 2; */
@@ -50,9 +44,9 @@
         li input[type=checkbox] {
             display:none;
         }
-        li input[type=checkbox]:checked svg > g > path::after {
+        /* li input[type=checkbox]:checked svg > g > path::after {
             background-color: red;
-        }
+        } */
 
 .nav__cont {
   position: fixed;
@@ -173,8 +167,8 @@ h1 {
       position: fixed;
     /* text-align: center; */
     /* top: 3px; */
-      margin-top: -8px;
-      margin-left: 10px;
+      margin-top: -6px;
+      margin-left: 6px;
     }
 
     .domain, .tick {
@@ -204,6 +198,7 @@ h1 {
     <filter id="blur">
         <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
     </filter>
+    <script type="text/javascript" src="/miniCurve.js"></script>
     <script>
       var areaWidth = null;
       var areaHeight = null;
@@ -214,6 +209,7 @@ h1 {
       var serie = null;
       var Request = null;
       var WaitResize = undefined;
+
       window.addEventListener('resize', function(event) {
           if (typeof WaitResize === 'number') {
               clearTimeout(WaitResize);
@@ -224,7 +220,16 @@ h1 {
           width = areaWidth - margin.left - margin.right, // zone de tracage
           height = areaHeight - margin.top - margin.bottom; // zone de tracage
           NbPts = Math.round(width/2);
+
           // console.log('areaWidth',areaWidth, 'areaHeight',areaHeight, 'margin',margin, 'width',width, 'height',height, 'NbPts',NbPts)
+          serie = [
+              // {name:'voltage', Unit:'V', precision:0.001, NbPoints:NbPts, tags:['PowerSupply']},
+              // {name:'CO2', Unit:'ppm', precision:10, NbPoints:NbPts},
+              // {name:'pressure', Unit:'Pa', precision:1, NbPoints:NbPts},
+              // {name:'voltage', Unit:'V', precision:0.001, NbPoints:NbPts, tags:['Battery']},
+              {name:'temperature', Unit:'°C', precision:0.01, NbPoints:NbPts},
+              // {name:'humidity', Unit:'%', precision:0.1, NbPoints:NbPts},
+          ]
           WaitResize = setTimeout(main, 200);
           
       }, true);
@@ -235,5 +240,4 @@ h1 {
       var colorScale = d3.scaleOrdinal(d3.schemePaired);
       const formatDate = d3.timeFormat("%Y-%m-%d %H:%M:%S");
     </script>
-    <script type="text/javascript" src="/miniCurve.js"></script>
     <script type="text/javascript" src="/multiCurves.js"></script>

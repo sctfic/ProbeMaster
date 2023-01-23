@@ -1,30 +1,36 @@
     function ToggleCurve(ClickedCurve,ID) {
-        // console.log(ClickedCurve.id+" path");
-        // var path = ClickedCurve.nextSibling.select('path')
-        // var path = d3.select(ClickedCurve.id).nextSibling.select('path')
-        // var legend = d3.select("#item_"+ID).nextSibling.selectAll(".miniLegend");
         var legend = d3.select("#item_"+ID+" .miniLegend");
         var path = d3.select("#Curve_"+ID);
         if (ClickedCurve.checked) {
-            // ClickedCurve.parentNode.parentNode.style.backgroundcolor = "coral";
-            // document.querySelector(“svg line”)
             path
                 .attr("stroke", "coral" )
                 .attr("stroke-width", 2);
+                serie.push({name:'pressure', Unit:'Pa', precision:1, NbPoints:NbPts},)
         } else {
             path
                 .attr("stroke", "steelblue" )
                 .attr("stroke-width", 1);
-        }
+                // Array.prototype.remove = function(value) {
+                //     return  this.filter(item => item !== value)
+                // }
+                serie = serie.filter(function(item) {
+                    console.log(item);
+                        if(item.name !== 'pressure' && item.tags !== ''){
+                            return item
+                        }
+                    }
+                )
+            }
+        main()
     }
     
     // set the dimensions and margins of the graph
-    var minimargin = {top: 4, right: 50, bottom: 4, left: 1}, // seront ajouté a Width et Height
+    var minimargin = {top: 1, right: 50, bottom: 1, left: 1}, // seront ajouté a Width et Height
         miniwidth = 150,
-        miniheight = 45,
+        miniheight = 30,
         miniNbPts = Math.round(miniwidth/2);
 
-    var miniDateStart= new Date(Date.now() - 14 * (24 * 60 * 60 * 1000));
+    var miniDateStart= new Date(Date.now() - 30 * (24 * 60 * 60 * 1000));
     var miniDateEnd= new Date(); // (new Date(Date.now() + 2 * (60 * 60 * 1000))) // (new date()).toISOString()   
 
     var miniserie = [
@@ -38,8 +44,6 @@
     // console.log(miniserie);
 
     const GetData = function(_serie) {
-        console.log('_Serie', _serie)
-
         _serie.tags = _serie.tags ? _serie.tags.map(tags => {
             // console.log('tags', tags);
             return {
@@ -82,7 +86,7 @@
                 .attr("height", miniheight + minimargin.top + minimargin.bottom);
 
         // console.log(_serie);
-        nextMini.append("text")
+        nextMini.append("p")
                 .text(_serie.name) // +" "+_serie.tags.value -join('-')
                 .attr("class", "miniLegend");
 
@@ -149,7 +153,7 @@
                     minsvg.append("text")
                         .attr("class", "miniLegend")
                         .attr("dx", miniwidth)
-                        .attr("dy", miniheight+5)
+                        .attr("dy", miniheight)
                         .text((d3.min(_serie.data, d => d.value))+" "+_serie.Unit);
 
                     return Curve
