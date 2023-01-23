@@ -44,6 +44,11 @@ app
 		console.log('NODEJS Route => .GET(/API/db/read)',query);
 		readData(query, request, response)
 	})
+	.post('/API/db/list', async function (request, response) {
+		var query = request.body; // le contenu du post
+		console.log('NODEJS Route => .GET(/API/db/list)',query);
+		readData(query, request, response)
+	})
 	.post('/API/db/save', async function (request, response) {
 		var raw = request.body;
 		var data = {
