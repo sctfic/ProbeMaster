@@ -10,7 +10,13 @@ app
 	.get("/graph", (request, response) => {
 		response.sendFile(path.resolve(__dirname, '../UI/', 'charts.html'));
 	})
-	.get("/graph/:mode", (request, response) => {
-		response.sendFile(path.resolve(__dirname, '../UI/', 'charts.html'));
+	.get("/minigraph", (request, response) => {
+		response.sendFile(path.resolve(__dirname, '../UI/', 'MiniCharts.html'));
 	})
+	.get("/dashboard", (request, response) => {
+		response.sendFile(path.resolve(__dirname, '../UI/', 'dashboard.html'));
+	})
+	// .get("/graph/:mode", (request, response) => {
+	// 	response.sendFile(path.resolve(__dirname, '../UI/', 'charts.html'));
+	// })
 }

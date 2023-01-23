@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>Serveur RPiMaster</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <script type="text/javascript" src="/d3.v7.min.js"></script>
+    <script type="text/javascript" src="/common.js"></script>
+    <link rel="stylesheet" href="/normalize.css">
+    <link rel="stylesheet" href="/skeleton.css">
+
+    <style>
+        div {
+            /* border-style: dotted;
+            border-width: 1px; */
+        }
+        #listCurve {
+            /* border-style: solid;
+            border-width: 1px;
+            list-style-type: none; */
+            margin: 0;
+            padding: 0;
+        }
+        li {
+            padding: 2px;
+            border-bottom: 1px solid coral;
+        }
+        /* li:hover {
+            margin: 1px;
+            border: 1px solid coral;
+        } */
+        /* li:hover{
+          fill: #ff7710;
+          color: #ff7710;
+          stroke: #ff7710;
+          stroke-width: 0.5px;
+        } */
+        li:hover svg > g > path {
+          stroke:coral;
+          /* stroke-width: 2; */
+        }
+        li:hover svg > text {
+          fill:coral;
+        }
+        li:hover text {
+          color:white;
+        }
+        li input[type=checkbox] {
+            display:none;
+        }
+        li input[type=checkbox]:checked svg > g > path::after {
+            background-color: red;
+        }
+
+.nav__cont {
+  position: fixed;
+  width: 60px;
+  top: 0;
+  height: 100vh;
+  z-index: 100;
+  background-color: #202020;
+  overflow: hidden;
+  transition: width 0.3s ease;
+  cursor: pointer;
+  box-shadow: 4px 7px 10px rgba(0, 0, 0, 0.4);
+}
+.nav__cont:hover {
+  width: 200px;
+}
+@media screen and (min-width: 600px) {
+  .nav__cont {
+    width: 60px;
+  }
+}
+.nav {
+  list-style-type: none;
+  color: white;
+}
+.nav:first-child {
+  padding-top: 1.5rem;
+}
+.nav__items {
+  padding-bottom: 4rem;
+  font-family: 'roboto';
+}
+.nav__items a {
+  position: relative;
+  display: block;
+  top: -35px;
+  padding-left: 25px;
+  padding-right: 15px;
+  transition: all 0.3s ease;
+  margin-left: 25px;
+  margin-right: 10px;
+  text-decoration: none;
+  color: white;
+  font-family: 'roboto';
+  font-weight: 100;
+  font-size: 1.35em;
+}
+.nav__items a:after {
+  content: '';
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 2px;
+  background: radial-gradient(circle at 94.02% 88.03%, #54a4ff, transparent 100%);
+  opacity: 0;
+  transition: all 0.5s ease;
+  z-index: -10;
+}
+.nav__items:hover a:after {
+  opacity: 1;
+}
+.nav__items svg {
+  width: 26px;
+  height: 26px;
+  position: relative;
+  left: -25px;
+  cursor: pointer;
+}
+@media screen and (min-width: 600px) {
+  .nav__items svg {
+    width: 32px;
+    height: 32px;
+    left: -15px;
+  }
+}
+body {
+  margin: 0;
+  background-color: #3c3c3c; /* 3c3c3c 463f32 */
+  font-size: 1em;
+  height: 100vh;
+  /* background: radial-gradient(circle at 94.02% 88.03%, #54a4ff, transparent 100%), radial-gradient(circle at 25.99% 27.79%, #ff94fb, transparent 100%), radial-gradient(circle at 50% 50%, #000000, #000000 100%); */
+}
+h1 {
+  margin-top: 6rem;
+  margin-left: 80px;
+  text-align: center;
+  font-family: 'Roboto';
+  font-weight: 100;
+  font-size: 4rem;
+  text-transform: uppercase;
+  color: white;
+  letter-spacing: 6px;
+  text-shadow: 10px 10px 10px rgba(0, 0, 0, 0.3);
+}
+</style>
+<style>
+    .line {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 1.5px;
+    }
+    .zoom {
+        cursor: move;
+        fill: none;
+        pointer-events: all;
+    }
+
+    .shadow{
+        text-shadow: -2px 0 2px #3c3c3c, 0 2px 2px #3c3c3c, 2px 0 2px #3c3c3c, 0 -2px 2px #3c3c3c,
+                      -2px 2px 2px #3c3c3c, 2px 2px 2px #3c3c3c, 2px -2px 2px #3c3c3c, -2px -2px 2px #3c3c3c;
+        filter:blur(2px);
+    }
+    .miniLegend {
+      fill: steelblue;
+      color: steelblue;
+      position: fixed;
+    /* text-align: center; */
+    /* top: 3px; */
+      margin-top: -8px;
+      margin-left: 10px;
+    }
+
+    .domain, .tick {
+        color: #d9d9d9;
+        /* fill: #d9d9d9; */
+    }
+    .measure {
+        fill: #d9d9d9;
+        font-size: 1em;
+    }
+</style>
+<!-- Create a div where the graph will take place -->
+    <nav class="nav__cont">
+        <ul id="listCurve" class="nav">
+        </ul>
+    </nav>
+    <div class="wrapper">
+        <main margin-left="80">
+          <svg id="SvgChart" width="960" height="500"></svg>
+          <pre>
+              <code id="status"></code>
+          </pre>
+        </main>
+    </div>
+
+  </body>
+    <filter id="blur">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
+    </filter>
+    <script>
+      var areaWidth = null;
+      var areaHeight = null;
+      var margin = null;
+      var width = null;
+      var height = null;
+      var NbPts = null;
+      var serie = null;
+      var Request = null;
+      var WaitResize = undefined;
+      window.addEventListener('resize', function(event) {
+          if (typeof WaitResize === 'number') {
+              clearTimeout(WaitResize);
+          }
+          areaWidth =  document.documentElement.clientWidth || document.body.clientWidth;
+          areaHeight =  document.documentElement.clientHeight || document.body.clientHeight;
+          margin = {top: 20, right: 65, bottom: 50, left: (65 + 60)},
+          width = areaWidth - margin.left - margin.right, // zone de tracage
+          height = areaHeight - margin.top - margin.bottom; // zone de tracage
+          NbPts = Math.round(width/2);
+          // console.log('areaWidth',areaWidth, 'areaHeight',areaHeight, 'margin',margin, 'width',width, 'height',height, 'NbPts',NbPts)
+          WaitResize = setTimeout(main, 200);
+          
+      }, true);
+
+      var url = (window.location.pathname).replace(/(.*?)[^/]*\..*$/,'$1');
+
+      var svg = d3.select('#SvgChart');
+      var colorScale = d3.scaleOrdinal(d3.schemePaired);
+      const formatDate = d3.timeFormat("%Y-%m-%d %H:%M:%S");
+    </script>
+    <script type="text/javascript" src="/miniCurve.js"></script>
+    <script type="text/javascript" src="/multiCurves.js"></script>

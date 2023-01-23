@@ -21,6 +21,8 @@ const router = require('./router');
 
 // Defini les repertoire dont l'url n'est pas interprete par le ROUTER mais juste servie directement
 app.use(express.static(__dirname + '/statics'));
+app.use(express.static(__dirname + '/Childrens/Chataignes/statics'));
+app.use(express.static(__dirname + '/Childrens/Roblox/statics'));
 
 // permet de définir les routes dans le fichier router.js
 app.use(router);
