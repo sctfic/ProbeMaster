@@ -1,7 +1,8 @@
 // const Influx = require('influx');
 const { getConnection } = require('../src/database/influx');
 const { saveData } = require('../src/save-data');
-const { readData } = require('../src/read-data');
+const { view, readData, ListHomeSeries} = require('../src/read-data');
+// const { ListHomeSeries } = require('../src/read-data');
 // const { getInfluxDBConnection } = require('../src/database/influx');
 
 const { query } = require('express');
@@ -25,12 +26,7 @@ const { query } = require('express');
 // influx -execute 'SHOW MEASUREMENTS ON "home"'
 // influx -execute 'SHOW TAG KEYS ON "home"'
 
-
-
-
 module.exports = function(app){
-
-
 
 app
     // .post("/probe", (request, response) => {
@@ -39,15 +35,21 @@ app
 	// 	response.json({ Status: 'Success', url: request.url, HostName: request.body.Network.hostname });
 	// 	response.status(201);
     // })
+	.get("/API/db/view", (request, response) => {
+		console.log('NODEJS Route => .GET(/API/db/View)','query View');
+		view(request, response);
+
+	})
+	.get("/API/db/list", (request, response) => {
+		console.log('NODEJS Route => .GET(/API/db/list)','query list');
+
+		ListHomeSeries(request, response);
+
+	})
     .post('/API/db/read', async function (request, response) {
 		var query = request.body; // le contenu du post
-		console.log('NODEJS Route => .GET(/API/db/read)',query);
-		readData(query, request, response)
-	})
-	.post('/API/db/list', async function (request, response) {
-		var query = request.body; // le contenu du post
-		console.log('NODEJS Route => .GET(/API/db/list)',query);
-		readData(query, request, response)
+		console.log('NODEJS Route => .POST(/API/db/read)',query);
+		readData(query, request, response);
 	})
 	.post('/API/db/save', async function (request, response) {
 		var raw = request.body;
@@ -148,9 +150,6 @@ app
 		console.log('.POST (/API/db/save)');
 		saveData(data);
     })
+
 }
-
-
-
-
 
